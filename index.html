@@ -49,6 +49,12 @@
   @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   @media (prefers-reduced-motion:reduce){#bang.on{animation:none;}}
 
+  #made{
+    position:fixed; right:14px; bottom:12px; z-index:5;
+    font-size:9px; letter-spacing:1.5px; color:var(--wood2);
+  }
+  body.open #made{display:none;}
+
   /* ---------- layar login ---------- */
   #login{
     position:fixed; inset:0; background:var(--cream); z-index:20;
@@ -94,7 +100,7 @@
   #empty{font-size:11px; color:var(--wood2); text-align:center; margin-top:34px; line-height:1.9;}
 
   .row{display:flex; gap:6px; align-items:flex-end; margin-bottom:10px;}
-  .row.mine{flex-direction:row-reverse;}
+  .row.theirs{flex-direction:row-reverse;}
   .bubble{
     max-width:74%; border:3px solid var(--soft); background:var(--cream2);
     padding:6px 8px; font-size:12px; line-height:1.7; word-break:break-word; white-space:pre-wrap;
@@ -289,6 +295,8 @@
   <span id="bang"><svg viewBox="0 0 6 10"><rect x="2" y="0" width="2" height="6" fill="#FDF6E4"/><rect x="2" y="7" width="2" height="2" fill="#FDF6E4"/></svg></span>
 </button>
 
+<span id="made">made by : trecya</span>
+
 <div id="login">
   <div class="loginbox">
     <p class="lgt">masuk dulu</p>
@@ -385,8 +393,8 @@ const CONFIG = {
 const ROOM  = "04dezz8oii";                   // ganti jadi huruf acak
 const NAMES = { banana:"banana", avocado:"avocado" }; // ganti nama panggilan kalian
 const EMAILS = {                      // email siapa jadi karakter apa (huruf kecil semua)
-  "banana@love.com":  "banana",
-  "avocado@love.com":   "avocado"
+  "emailkamu@gmail.com":  "banana",
+  "emaildia@gmail.com":   "avocado"
 };
 /* ================================================== */
 
@@ -546,7 +554,7 @@ function draw(m){
   $('empty').style.display = 'none';
   const near = $('msgs').scrollHeight - $('msgs').scrollTop - $('msgs').clientHeight < 100;
   const el = document.createElement('div');
-  el.className = 'row' + (m.who===me ? ' mine' : '');
+  el.className = 'row' + (m.who===me ? ' mine' : ' theirs');
   el.innerHTML = `<span class="av" style="background:${ART[m.who].bg}">${avatar(m.who)}</span>
     <div class="bubble b-${m.who}">${esc(m.text)}</div>
     <span class="meta"><span class="time">${clock(m.t)}</span>${m.who===me?'<span class="tick"></span>':''}</span>`;
