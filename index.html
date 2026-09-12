@@ -393,8 +393,8 @@ const CONFIG = {
 const ROOM  = "04dezz8oii";                   // ganti jadi huruf acak
 const NAMES = { banana:"banana", avocado:"avocado" }; // ganti nama panggilan kalian
 const EMAILS = {                      // email siapa jadi karakter apa (huruf kecil semua)
-  "banana@love.com":  "banana",
-  "avocado@love.com":   "avocado"
+  "banana@love.com":   "banana",
+  "avocado@love.com":  "avocado"
 };
 /* ================================================== */
 
@@ -520,6 +520,11 @@ setPhase(); setInterval(setPhase, 300000);
 /* ---------- buka tutup ---------- */
 let unread = 0;
 const open = () => document.body.classList.contains('open');
+/* sekali seumur hidup: coba set ukuran jendela app biar pas */
+if (matchMedia('(display-mode: standalone)').matches && !store.get('sized')) {
+  store.set('sized', '1');
+  try { window.resizeTo(700, 660); } catch(e) {}
+}
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
