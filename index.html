@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#F6E7C6" />
-<title>chat</title>
+<title>love letter ♥</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -390,6 +390,7 @@ const CONFIG = {
   messagingSenderId: "374470346613",
   appId: "1:374470346613:web:9e73da142a12b7a931753c"
 };
+const JUDUL = "love letter \u2665";              // tulisan di bar atas jendela
 const ROOM  = "04dezz8oii";                   // ganti jadi huruf acak
 const NAMES = { banana:"banana", avocado:"avocado" }; // ganti nama panggilan kalian
 const EMAILS = {                      // email siapa jadi karakter apa (huruf kecil semua)
@@ -423,7 +424,7 @@ function renderIdentity(){
   $('portrait').style.background = ART[you].bg;
   $('mineFace').innerHTML = avatar(me);
   $('mineFace').style.background = ART[me].bg;
-  document.title = NAMES[you];
+  document.title = JUDUL;
 }
 renderIdentity();
 $('chL').innerHTML = standee('banana',false);
@@ -530,7 +531,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 }
 function badge(){
   $('bang').classList.toggle('on', unread>0);
-  document.title = unread ? '! '+NAMES[you] : NAMES[you];
+  document.title = unread ? '! ' + JUDUL : JUDUL;
   try {
     if (unread > 0) navigator.setAppBadge && navigator.setAppBadge(unread);
     else navigator.clearAppBadge && navigator.clearAppBadge();
