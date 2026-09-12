@@ -91,6 +91,21 @@
   body.open #win{display:flex;}
   body.open #launcher{display:none;}
 
+  .tabs{display:flex; gap:8px; flex-wrap:wrap;}
+  .tab{
+    position:relative; width:46px; height:46px; padding:3px; display:flex; gap:2px;
+    background:var(--cream2); border:3px solid var(--wood2);
+  }
+  .tab.on{background:var(--blush); border-color:var(--red);}
+  .tab:active{transform:translate(2px,2px);}
+  .tab .mini{flex:1; min-width:0; display:block; border:2px solid var(--soft);}
+  .tab .mini img{width:100%; height:100%;}
+  .tab .dot{
+    position:absolute; top:-6px; right:-6px; width:12px; height:12px;
+    background:var(--red); border:3px solid var(--wood); display:none;
+  }
+  .tab.unread .dot{display:block;}
+
   .top{display:flex; gap:12px; flex:1; min-height:0;}
   #screen{
     flex:1; min-width:0; position:relative;
@@ -101,6 +116,21 @@
 
   .row{display:flex; gap:6px; align-items:flex-end; margin-bottom:10px;}
   .row.theirs{flex-direction:row-reverse;}
+  .bubble.voice{display:flex; align-items:center; gap:7px; cursor:pointer;}
+  .bubble.voice .play{
+    width:24px; height:24px; padding:0; flex:0 0 24px; color:var(--wood);
+    background:var(--panel); border:3px solid var(--wood2);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .bubble.voice .play svg{width:11px; height:11px;}
+  .bubble.voice .dur{font-size:11px;}
+  #mic{width:34px; height:34px; padding:0; background:var(--cream2); border:3px solid var(--wood2);
+       display:flex; align-items:center; justify-content:center;}
+  #mic:active{transform:translate(2px,2px);}
+  #mic svg{width:16px; height:16px;}
+  #mic.rec{background:var(--red); border-color:var(--wood);}
+  #mic.rec svg rect{fill:#FDF6E4;}
+  body:not(.pakai-cium) #kissBtn{display:none;}
   .bubble{
     max-width:74%; border:3px solid var(--soft); background:var(--cream2);
     padding:6px 8px; font-size:12px; line-height:1.7; word-break:break-word; white-space:pre-wrap;
@@ -118,7 +148,10 @@
 
   /* ---------- kolom kanan ---------- */
   .side{width:96px; flex:0 0 96px; display:flex; flex-direction:column; gap:9px;}
-  .portrait{width:96px; height:96px; border:4px solid var(--wood); position:relative;}
+  .portrait{width:96px; height:96px; border:4px solid var(--wood); position:relative;
+            display:flex; gap:2px; background:var(--cream2);}
+  .portrait .wajah{flex:1; min-width:0;}
+  .portrait .wajah img{width:100%; height:100%;}
   .portrait img{width:100%;height:100%;}
   .here{
     position:absolute; bottom:-4px; left:-4px; right:-4px;
@@ -286,6 +319,17 @@
   @media (max-height:620px), (max-width:620px){
     #kiss[data-phase="malam"]{--rope:92px; --sit:78px;}
   }
+  @media (max-width:540px){
+    .top{flex-direction:column; gap:10px;}
+    .side{width:auto; flex:none; flex-direction:row; align-items:center; gap:8px; order:-1;}
+    .portrait{width:52px; height:52px; flex:0 0 52px;}
+    .here{font-size:7px;}
+    .pad{flex:1; grid-template-columns:repeat(4,1fr); gap:8px;}
+    .key{aspect-ratio:auto; height:44px;}
+    #screen{flex:1; min-height:220px;}
+    .tab{width:42px; height:42px;}
+    .mine-face{width:46px; height:46px; flex:0 0 46px;}
+  }
   @media (max-width:620px){
     #win{padding:14px; gap:10px;}
     .top{gap:10px;}
@@ -319,6 +363,7 @@
 </div>
 
 <section id="win">
+  <div class="tabs" id="tabs"></div>
   <div class="top">
     <div id="screen">
       <div id="msgs"><div id="empty">belum ada pesan<br>sapa dia duluan</div></div>
@@ -382,6 +427,9 @@
     <div class="mine-face" id="mineFace"></div>
     <div class="field">
       <input id="text" placeholder="tulis sesuatu..." autocomplete="off" maxlength="500" />
+      <button id="mic" aria-label="rekam suara">
+        <svg viewBox="0 0 16 16"><rect x="6" y="1" width="4" height="8" fill="#5C3A2A"/><rect x="4" y="6" width="1" height="3" fill="#5C3A2A"/><rect x="11" y="6" width="1" height="3" fill="#5C3A2A"/><rect x="5" y="9" width="6" height="1" fill="#5C3A2A"/><rect x="7" y="10" width="2" height="3" fill="#5C3A2A"/><rect x="5" y="13" width="6" height="2" fill="#5C3A2A"/></svg>
+      </button>
       <button id="go" aria-label="kirim">
         <svg viewBox="0 0 16 16"><rect x="2" y="7" width="9" height="2" fill="#5C3A2A"/><rect x="8" y="4" width="2" height="2" fill="#5C3A2A"/><rect x="10" y="6" width="2" height="4" fill="#5C3A2A"/><rect x="8" y="10" width="2" height="2" fill="#5C3A2A"/></svg>
       </button>
@@ -404,23 +452,42 @@ const CONFIG = {
   messagingSenderId: "374470346613",
   appId: "1:374470346613:web:9e73da142a12b7a931753c"
 };
-const JUDUL = "love letter \u2665";              // tulisan di bar atas jendela
-const ROOM  = "04dezz8oii";                   // ganti jadi huruf acak
-const NAMES = { banana:"banana", avocado:"avocado" }; // ganti nama panggilan kalian
-const EMAILS = {                      // email siapa jadi karakter apa (huruf kecil semua)
-  "banana@love.com":   "banana",
-  "avocado@love.com":  "avocado"
+const JUDUL = "love letter \u2665";
+
+/* siapa saja yang boleh masuk — email huruf kecil semua */
+const USERS = {
+  "banana@love.com":   { tokoh:"banana",   nama:"banana"   },
+  "avocado@love.com":  { tokoh:"avocado",  nama:"avocado"  },
+  "ponakan1@love.com": { tokoh:"stroberi", nama:"ponakan 1" },
+  "ponakan2@love.com": { tokoh:"bluberi",  nama:"ponakan 2" }
 };
+
+/* daftar ruang chat. id = huruf acak, jangan dikasih tahu siapa pun */
+const ROOMS = [
+  { id:"04dezz8oii", label:"berdua",   anggota:["banana","avocado"],              cium:true },
+  { id:"r1k9xq2af7", label:"ponakan 1", anggota:["banana","stroberi"] },
+  { id:"r2m4vz8bd3", label:"ponakan 2", anggota:["banana","bluberi"] },
+  { id:"r3tg7wp5nc", label:"bertiga",  anggota:["banana","stroberi","bluberi"] }
+];
+
+const REKAM_MAKS = 15;   // panjang voice note maksimal, dalam detik
 /* ================================================== */
 
 const ART = {
   avocado:{ idle:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABPElEQVR4nO2WMW4CMRBFPyin2IJ+D4C0kTgAHT1SqhQWR+AkaCU4R3IDkHIAN6lS+BgZCnaRM8zsjDdbpMiXkAyS/eaNjXeB/wzkuF3Rn4fNpy7EymzkvNyuaI0xhhRTwHG7QkyBwycPxRSogxD77srTGGpnNiolLaWYAhbfS60Al6UXSJaVF1p8aL7mH6VTioGmXR+PpQV0w7yZ/KaxLIeAol1dtair9mEMAKfDxYQW/Q/rqsX63IjjmAJed425hmb4w643WZ8bvD/fLPiYm2qW2sV7B+YmWt4+97fFXjbghXKG1FJ1w3ujPFIxp8NFbS83pL5VvFLLUpojMaSWEvB4Qed7JEUqsOuICbyDOVRrlfS7tH8WsAjqgXmAgNLiAdDguiXvI57nnble0V2andRZ9jFP8G+iWbrfaa73VqApfSVxgwAAAABJRU5ErkJggg==",
-            kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABVElEQVR4nO2WPU7DQBCFXyKOQGUhKhpXVEiOlAO4ow+ioljR01BwjshScgIOQG5gSxxgm1QptuMKDAW25Z/Z3RnHBQVPsrS2vPPNmx2PDPwroN1mTX8etpw7kZgWE/d13aliTHFI1hnsNmtYZ4bw2UXWGaohNLgX6WIKtXY2SZqSknUG1993vgRELqVAirmSQtVNc1p+areogVF3jSQuY0AxTKrZJ03MZQjIukuTAmlSjNYAsN9WUajqO0yTAnmZsWvrDJ6eM024nsg60151tpSXWXDdvP/yduudQL7B25YzTQp8Xd3g4f3Sm93H8fU32ON9bwrV5e4xuDM8exg3Z8lp6JDyMsNhVY0ybc7LJ24Px+BKSsB4QHe7kROX4GFViYAteAjdbyu2E7nn3PnFgCqoBCYBAp4SB0DBuJr/EUn3RuOpZmmnUxedK9rB58jnUvzt/gBROq++N8tBRQAAAABJRU5ErkJggg==",
-            head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAyElEQVR4nJ2TzQ2DMAyFv6BOwQZsABtw6wQ99RB1hE6CcmCOsgHZIJees0Z7QKmcv4J4UiTLst97jhNFjo/zupCO0bUGQKkzzZKkOdsc0OyX1OG8/hEU1bvWhFmjGGCeLADhDjKCrjWMaw/AMtgolrVN2hyUxrVnGTaVNJZOlCSQqjW83s+t8XbFec2lVhgUJUrkkYOjLuQ9ZA6c19GMJUjB6hbmyXJ/5E7SvHzKh0kksr+QWqwhjJkSREQ7UPDnL4hNKHGyDX0BtTJhUk4+vEYAAAAASUVORK5CYII=", bg:"#F2662C" },
-  banana: { idle:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABUklEQVR4nNWWMVLDMBBFvxgqmtT0aXwD5wam8gkowingBHAKKDhBKnID+wZp6KnTpN0USBrJya6+4gwz/BlPZkfRf9pdWTLwTyXsH2+uCKOgc4EpxP0FsFpzgHTfUlFlOAd6f7sHADw9/1T51QJFdosYfGzuskEPNz1rSprBAGDdH+Lvuj+ErM1SsxmewFTDZm/63tbCvOHvwG4RY3ZBDDCDdUObxGOMXTNS0FIPY3YpbLsaASCLu6HNslcXzQBds4d8bgAAD8tXc8LX9wvcY696V5U0KGQ4VVpuTVSGwGn/CotRfWlggBIyPatKWtqFzIKsXSqsybl5mrQMZfq+sS92N7TYrkbBJbs07EYWls7RZDU4rPJq5yhg9zBMdEwfp1dVyZRR3AzTjFMYcyfWSLqhFQ/XHlNzvmmcf9ITqJhZ1Y1vHW1+7KIPKxOqmFLlBIAjN5WIEE64IzkAAAAASUVORK5CYII=",
-            kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABVklEQVR4nNWWsW3DMBBFP4NUaVSkSp9GG8gbKJWrDGBPkQ2SKZIiyADuvIG0gZqUBtKkceP2XJgkKFl3+owMA/mAYBMU/+PxyKOAfyphX7y5IIyCzgWmEHcNYLbmAOm8paKWYQz0/vYAAFi//GT55QJFuiI2PjZ3vU4PNz1zlrQHA4DV8hB/V8tDiNpcajbCM5hqWO5N39tcmDc8dXRFbLMTYoA9WN1USbuNbVe2NNSSSFeIdIUAkLqppG4qwSlP6n9z0gQQrtxDPjcAgKfHV/Xlr+dfAMD97lv1vnqloSIEzvOnabtoTV8aGKCETM+sXTq1C5kJWTkU1mRsnCYtQhmeN/aM1U2F7aIVKEtrLqnfAFkHOozRZCU4zPJidRSwcxgGOiaPw6tqypRR3AzDiFMYcyfmaFgzxx5Tc0qb809agSYjy7rxrdLm+/70YWVCFVNqOQHgCFspkIP8YO64AAAAAElFTkSuQmCC",
-            head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA30lEQVR4nJWSqxXCMBSGv9uDwqDxmG5QNiiqEyBgCpgApgDBBCjYoN0Ag0djsEGQ3JNHG+A3PTfJ/0oq5GGiWeIDyYJPPOynAKw3j0FOn4Axt4kOx/M42LRiyityZIBV89Lvqnm5VFpNcuQhSPlU7qiPbA98Nm4TnfsMRvGClE/qtvLmTmcpu0Sk8N198nXeAQRz3VZBOtfDuJjmdAZgMdsNXwBwuW+RZQMgSQUHlyCGXy9IEFfIwYpLIuBEfoA+f1Lh278QGxR/uAY+KlC3Ve/z5GDvyYC9A/ge3SEykjd0Zlz1EXp7RAAAAABJRU5ErkJggg==", bg:"#4FD2F0" }
+    kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABVElEQVR4nO2WPU7DQBCFXyKOQGUhKhpXVEiOlAO4ow+ioljR01BwjshScgIOQG5gSxxgm1QptuMKDAW25Z/Z3RnHBQVPsrS2vPPNmx2PDPwroN1mTX8etpw7kZgWE/d13aliTHFI1hnsNmtYZ4bw2UXWGaohNLgX6WIKtXY2SZqSknUG1993vgRELqVAirmSQtVNc1p+areogVF3jSQuY0AxTKrZJ03MZQjIukuTAmlSjNYAsN9WUajqO0yTAnmZsWvrDJ6eM024nsg60151tpSXWXDdvP/yduudQL7B25YzTQp8Xd3g4f3Sm93H8fU32ON9bwrV5e4xuDM8exg3Z8lp6JDyMsNhVY0ybc7LJ24Px+BKSsB4QHe7kROX4GFViYAteAjdbyu2E7nn3PnFgCqoBCYBAp4SB0DBuJr/EUn3RuOpZmmnUxedK9rB58jnUvzt/gBROq++N8tBRQAAAABJRU5ErkJggg==",
+    head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAyElEQVR4nJ2TzQ2DMAyFv6BOwQZsABtw6wQ99RB1hE6CcmCOsgHZIJees0Z7QKmcv4J4UiTLst97jhNFjo/zupCO0bUGQKkzzZKkOdsc0OyX1OG8/hEU1bvWhFmjGGCeLADhDjKCrjWMaw/AMtgolrVN2hyUxrVnGTaVNJZOlCSQqjW83s+t8XbFec2lVhgUJUrkkYOjLuQ9ZA6c19GMJUjB6hbmyXJ/5E7SvHzKh0kksr+QWqwhjJkSREQ7UPDnL4hNKHGyDX0BtTJhUk4+vEYAAAAASUVORK5CYII=", bg:"#F2662C" },
+  banana:{ idle:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABPElEQVR4nO2WMW4CMRBFPyin2IJ+D4C0kTgAHT1SqhQWR+AkaCU4R3IDkHIAN6lS+BgZCnaRM8zsjDdbpMiXkAyS/eaNjXeB/wzkuF3Rn4fNpy7EymzkvNyuaI0xhhRTwHG7QkyBwycPxRSogxD77srTGGpnNiolLaWYAhbfS60Al6UXSJaVF1p8aL7mH6VTioGmXR+PpQV0w7yZ/KaxLIeAol1dtair9mEMAKfDxYQW/Q/rqsX63IjjmAJed425hmb4w643WZ8bvD/fLPiYm2qW2sV7B+YmWt4+97fFXjbghXKG1FJ1w3ujPFIxp8NFbS83pL5VvFLLUpojMaSWEvB4Qed7JEUqsOuICbyDOVRrlfS7tH8WsAjqgXmAgNLiAdDguiXvI57nnble0V2andRZ9jFP8G+iWbrfaa73VqApfSVxgwAAAABJRU5ErkJggg==",
+    kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABVElEQVR4nO2WPU7DQBCFXyKOQGUhKhpXVEiOlAO4ow+ioljR01BwjshScgIOQG5gSxxgm1QptuMKDAW25Z/Z3RnHBQVPsrS2vPPNmx2PDPwroN1mTX8etpw7kZgWE/d13aliTHFI1hnsNmtYZ4bw2UXWGaohNLgX6WIKtXY2SZqSknUG1993vgRELqVAirmSQtVNc1p+areogVF3jSQuY0AxTKrZJ03MZQjIukuTAmlSjNYAsN9WUajqO0yTAnmZsWvrDJ6eM024nsg60151tpSXWXDdvP/yduudQL7B25YzTQp8Xd3g4f3Sm93H8fU32ON9bwrV5e4xuDM8exg3Z8lp6JDyMsNhVY0ybc7LJ24Px+BKSsB4QHe7kROX4GFViYAteAjdbyu2E7nn3PnFgCqoBCYBAp4SB0DBuJr/EUn3RuOpZmmnUxedK9rB58jnUvzt/gBROq++N8tBRQAAAABJRU5ErkJggg==",
+    head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAyElEQVR4nJ2TzQ2DMAyFv6BOwQZsABtw6wQ99RB1hE6CcmCOsgHZIJees0Z7QKmcv4J4UiTLst97jhNFjo/zupCO0bUGQKkzzZKkOdsc0OyX1OG8/hEU1bvWhFmjGGCeLADhDjKCrjWMaw/AMtgolrVN2hyUxrVnGTaVNJZOlCSQqjW83s+t8XbFec2lVhgUJUrkkYOjLuQ9ZA6c19GMJUjB6hbmyXJ/5E7SvHzKh0kksr+QWqwhjJkSREQ7UPDnL4hNKHGyDX0BtTJhUk4+vEYAAAAASUVORK5CYII=", bg:"#F2662C" },
+  stroberi:{ idle:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABCUlEQVR4nO2WsQ7BUBSGPyJewVRzMdk7SXQxW0w2k3gDgzcQk81kMVs0Mdk7KbNOXsHC4tI22nuvRlPi305zzvnP/7f39ELGKOgWDHedazCeWWutHkVdwrRQmi6qKg4qajNXmC9LT+22kpVRVB0ntu/vWxpL+K6dstrMFZZUkox5DYCatQRg02gCYO9dAA67HgD+4JCesDIac/FEtHyZc/G691w4TyeJ/fJpqYCwUli8GXyAsFxfAc/3Y+9dsNzQEOfp5DGEDPlZbWnOIcSvN+nvJEgsbAt+/tFnSXsU8mSpgK61MoXK9xEZsYxIQOscAmx9PxS3DEOrXvvWtjDNkNL+8ajd44/vxg1m9EwgBtgB0wAAAABJRU5ErkJggg==",
+    kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAABC0lEQVR4nO2WLQ7CQBCFPwjhCqiiKSh8FQkYNAaFQxFugOAGBIVD1aAxNEHhUfxoVvUKGDCUlIbt7naTBgjPTTMzr+/N/kHOKJgWjHbdWzyee2ujHkVTQlto/V1SlQw6anNX+FmWXtptLSuTqAaBtO/vWyolzGqnqjZ3hSWdJGfhAuB6PgCbRhOAzmEPwGnXB0AMT/aElfGE6zGK/Lc512PvkQvhbGpHGEekTBbrINMMt0KwFSJLqVphub4C0ucTzqbPOVsTvkPLcbKUASlHm80+BPnxprxO4sSRbXF7k9/SzlH4tNsCzK1VKdR+j6iIVUQRjFdpcv+ZrljjV9uyVntROjifjXv88d24AxVMTLGwhXAtAAAAAElFTkSuQmCC",
+    head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAtUlEQVR4nLWSMRKCMBBFXxzHK1iZHq3saeEGNl6A0htYcANKL0DjDdjWngroteIKNNoQRM2MTIy/20327f+TKHpdo+iOg2YuQ/4Brva9OJi/N1anAIAgzAEoNlsA4qoEoLnsAbglzSdgeTjS1abKrRu7etffhTZL/xDByFg3kYpkAmCxPgPPfHFVQli+QNssHaDg4RUU/PYP1LgYg4xNE8fW0yLKTwSbgynSIkrZDr6BtMgw9wC4MTd+yA6qBQAAAABJRU5ErkJggg==", bg:"#FFD9E2" },
+  bluberi:{ idle:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAAsklEQVR4nGNgGO6AkVQNuUe8/yPzJ9tsJckMJlItpBTQ3UKigiOn5tp/wqoYGKa0aBE0b3D5kFifoQN8Ph3+iYYkCzfNiWHYNCcGJ5/qFlIDsBBSEKUnAGdvIkLNsksfKLMQGfilLMHLJwaQZCEDAwNGnJFqKUELCQURsWqIthAdkBOMyGBw50NqgOFfW5CUaK5cOIVVXMfAjGgzSGqPOPgswBq0B7YkEG0O3YN0FAx9AAASxC34plKjKgAAAABJRU5ErkJggg==",
+    kiss:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAArElEQVR4nGNgGO6AkVQNuUe8/yPzJ9tsJckMJlItpBTQ3UKigiOn5tp/wqoYGKa0aBE0b3D5kFifoQN8Ph3+iYYkCzfNiWHYNCcGJ5/qFlIDsBBSEKUngOCkLEGR84PykdUsu/QBr3lk+fDKhVMMVy6cIkfrIAxSbEGkY2BGUA0uMLizxZC0cPjXFgRTKTLAlffQUy0+QFJ7xMFnAdagPbAlgWhz6B6ko2DoAwDOMS4K1yfmLgAAAABJRU5ErkJggg==",
+    head:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAc0lEQVR4nGNkQAM5Ndf+o4thA1NatBgZGBgYmIhRjA8wkmozOqDYBbQzYNOcGIZNc2Jw8qnmAhZkTpSeAMJGHBqQ1Sy79AHVAGTgl7IELx+rC9ABup+xGYJiwLJLH/CZh1UNXhfgcjYyGPiExIguQPfcCAApaCGpfhFpEQAAAABJRU5ErkJggg==", bg:"#DDE0FA" }
 };
+
 const avatar  = w => `<img class="sp" alt="" src="${ART[w].head}">`;
 const standee = (w,k) => `<img class="sp" alt="" src="${ART[w][k?'kiss':'idle']}">`;
 
@@ -428,14 +495,10 @@ const $ = id => document.getElementById(id);
 const store = { get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
                 set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}} };
 
-const p = new URLSearchParams(location.search).get('me');
-if (p === 'avocado' || p === 'banana') store.set('me', p);
-let me  = store.get('me') === 'avocado' ? 'avocado' : 'banana';
-let you = me === 'banana' ? 'avocado' : 'banana';
+let me = store.get('me') || 'banana';
+let ruangSaya = [], ruang = null, lawan = [];
 
 function renderIdentity(){
-  $('portrait').innerHTML = avatar(you) + '<span class="here" id="here">...</span>';
-  $('portrait').style.background = ART[you].bg;
   $('mineFace').innerHTML = avatar(me);
   $('mineFace').style.background = ART[me].bg;
   document.title = JUDUL;
@@ -534,31 +597,39 @@ setPhase(); setInterval(setPhase, 300000);
 
 /* ---------- buka tutup ---------- */
 let unread = 0;
+const belum = {};                       // jumlah pesan belum dibaca per ruang
 const open = () => document.body.classList.contains('open');
-/* sekali seumur hidup: coba set ukuran jendela app biar pas */
-if (matchMedia('(display-mode: standalone)').matches && !store.get('sized')) {
-  store.set('sized', '1');
-  try { window.resizeTo(700, 660); } catch(e) {}
-}
+
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+if (matchMedia('(display-mode: standalone)').matches && !store.get('sized')) {
+  store.set('sized','1');
+  try { window.resizeTo(700, 660); } catch(e) {}
+}
+
 function badge(){
-  $('bang').classList.toggle('on', unread>0);
+  unread = Object.values(belum).reduce((a,b)=>a+b, 0);
+  $('bang').classList.toggle('on', unread > 0);
   document.title = unread ? '! ' + JUDUL : JUDUL;
+  ruangSaya.forEach(r => {
+    const t = $('tab-' + r.id);
+    if (t) t.classList.toggle('unread', (belum[r.id]||0) > 0);
+  });
   try {
     if (unread > 0) navigator.setAppBadge && navigator.setAppBadge(unread);
     else navigator.clearAppBadge && navigator.clearAppBadge();
   } catch(e) {}
 }
-function toast(text){
+function toast(judul, isi){
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  if (!document.hidden) return;
-  try { new Notification(NAMES[you], { body: text, icon: 'icon-192.png', tag: 'chat' }); } catch(e) {}
+  if (!document.hidden && open()) return;
+  try { new Notification(judul, { body: isi, icon:'icon-192.png', tag:'chat' }); } catch(e) {}
 }
 $('launcher').addEventListener('click', ()=>{
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-  document.body.classList.add('open'); unread=0; badge(); seeAll();
+  document.body.classList.add('open');
+  if (ruang) { belum[ruang.id] = 0; badge(); seeAll(); }
   $('msgs').scrollTop = $('msgs').scrollHeight;
 });
 $('closeBtn').addEventListener('click', ()=>{ stopMusic(); flushKisses(); document.body.classList.remove('open'); });
@@ -566,53 +637,67 @@ $('closeBtn').addEventListener('click', ()=>{ stopMusic(); flushKisses(); docume
 /* ---------- chat ---------- */
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock = t => t ? new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+const mmss = d => Math.floor(d/60) + ':' + String(Math.round(d%60)).padStart(2,'0');
 const CHECK = `<svg viewBox="0 0 10 8"><rect x="0" y="4" width="2" height="2" fill="currentColor"/><rect x="2" y="6" width="2" height="2" fill="currentColor"/><rect x="4" y="4" width="2" height="2" fill="currentColor"/><rect x="6" y="2" width="2" height="2" fill="currentColor"/><rect x="8" y="0" width="2" height="2" fill="currentColor"/></svg>`;
-const mine = [];
+const PLAY = `<svg viewBox="0 0 12 12"><rect x="2" y="1" width="2" height="10" fill="currentColor"/><rect x="4" y="2" width="2" height="8" fill="currentColor"/><rect x="6" y="3" width="2" height="6" fill="currentColor"/><rect x="8" y="4" width="2" height="4" fill="currentColor"/></svg>`;
+const STOP = `<svg viewBox="0 0 12 12"><rect x="2" y="2" width="3" height="8" fill="currentColor"/><rect x="7" y="2" width="3" height="8" fill="currentColor"/></svg>`;
+
+let mine = [], rows = {};
 let theirHere = false, theirLastOn = 0, theirSeen = 0;
 
-const rows = {};
+function isi(m){
+  if (m.kind === 'v')
+    return `<div class="bubble b-${m.who} voice" data-src="${m.data}">
+      <button class="play">${PLAY}</button><span class="dur">${mmss(m.dur||0)}</span></div>`;
+  return `<div class="bubble b-${m.who}">${esc(m.text)}</div>`;
+}
+
 function draw(m, key){
   $('empty').style.display = 'none';
   const near = $('msgs').scrollHeight - $('msgs').scrollTop - $('msgs').clientHeight < 100;
   const el = document.createElement('div');
-  el.className = 'row' + (m.who===me ? ' mine' : ' theirs');
+  el.className = 'row' + (m.who === me ? ' mine' : ' theirs');
   if (key) { el.dataset.key = key; rows[key] = el; }
-  el.innerHTML = `<span class="av" style="background:${ART[m.who].bg}">${avatar(m.who)}</span>
-    <div class="bubble b-${m.who}">${esc(m.text)}</div>
+  const nama = m.who === me ? '' : `<span class="siapa">${esc(ART[m.who] ? m.who : '?')}</span>`;
+  el.innerHTML = `<span class="av" style="background:${(ART[m.who]||{}).bg||'#eee'}">${ART[m.who]?avatar(m.who):''}</span>
+    ${isi(m)}
     <span class="meta"><span class="time">${clock(m.t)}</span>${m.who===me?'<span class="tick"></span>':''}</span>`;
   $('msgs').appendChild(el);
-  if (m.who===me){ mine.push({t:m.t, key, node:el.querySelector('.tick')}); paintTicks(); }
-  if (near || m.who===me) $('msgs').scrollTop = $('msgs').scrollHeight;
+  if (m.who === me){ mine.push({t:m.t, key, node:el.querySelector('.tick')}); paintTicks(); }
+  if (near || m.who === me) $('msgs').scrollTop = $('msgs').scrollHeight;
 }
 
 function paintTicks(){
   mine.forEach(x=>{
-    let cls='', label='undelivered', icon='';
-    if (theirSeen >= x.t){ cls='read'; label='read'; icon=CHECK+CHECK; }
-    else if (theirHere || theirLastOn >= x.t){ label='delivered'; icon=CHECK; }
+    let cls='', label='belum sampai', icon='';
+    if (theirSeen >= x.t){ cls='read'; label='dibaca'; icon=CHECK+CHECK; }
+    else if (theirHere || theirLastOn >= x.t){ label='sampai'; icon=CHECK; }
+    if (!x.node) return;
     x.node.className = 'tick ' + cls;
     x.node.innerHTML = icon + '<span>'+label+'</span>';
   });
 }
 function presence(){
-  $('here').textContent = theirHere ? 'online'
+  $('here').textContent = theirHere ? 'lagi buka'
     : (theirLastOn ? 'terakhir '+clock(theirLastOn) : 'offline');
   paintTicks();
 }
 
-/* ---------- hapus pesan ---------- */
-let hapus = () => {};
-let hapusSemua = () => {};
-
-function lepas(key){
-  const el = rows[key]; if (el) el.remove();
-  delete rows[key];
-  const i = mine.findIndex(x => x.key === key);
-  if (i > -1) mine.splice(i, 1);
-  if (!$('msgs').querySelector('.row')) $('empty').style.display = 'block';
-}
-
+/* main voice note */
+let nowPlaying = null;
 $('msgs').addEventListener('click', e => {
+  const play = e.target.closest('.play');
+  if (play){
+    const box = play.closest('.voice');
+    if (nowPlaying){ nowPlaying.audio.pause(); nowPlaying.btn.innerHTML = PLAY;
+      const sama = nowPlaying.btn === play; nowPlaying = null; if (sama) return; }
+    const a = new Audio(box.dataset.src);
+    a.play().catch(()=>{});
+    play.innerHTML = STOP;
+    nowPlaying = { audio:a, btn:play };
+    a.onended = () => { play.innerHTML = PLAY; nowPlaying = null; };
+    return;
+  }
   const row = e.target.closest('.row.mine');
   if (!row || !row.dataset.key) return;
   if (e.target.classList.contains('del')) { hapus(row.dataset.key); return; }
@@ -623,13 +708,20 @@ $('msgs').addEventListener('click', e => {
   setTimeout(() => b.remove(), 4000);
 });
 
+/* ---------- hapus ---------- */
+let hapus = () => {}, hapusSemua = () => {};
+function lepas(key){
+  const el = rows[key]; if (el) el.remove();
+  delete rows[key];
+  const i = mine.findIndex(x => x.key === key);
+  if (i > -1) mine.splice(i, 1);
+  if (!$('msgs').querySelector('.row')) $('empty').style.display = 'block';
+}
 let siap = false;
 $('wipe').addEventListener('click', () => {
-  if (!siap) {
-    siap = true;
-    $('wipe').textContent = 'yakin? pencet lagi';
-    $('wipe').classList.add('armed');
-    setTimeout(() => { siap = false; $('wipe').textContent = 'hapus semua'; $('wipe').classList.remove('armed'); }, 4000);
+  if (!siap){
+    siap = true; $('wipe').textContent = 'yakin? pencet lagi'; $('wipe').classList.add('armed');
+    setTimeout(()=>{ siap=false; $('wipe').textContent='hapus semua'; $('wipe').classList.remove('armed'); }, 4000);
     return;
   }
   siap = false; $('wipe').textContent = 'hapus semua'; $('wipe').classList.remove('armed');
@@ -673,119 +765,203 @@ function flushKisses(){
   }
 }
 
-/* ---------- firebase ---------- */
-let say = () => {};
-let seeAll = () => {};
-let demo = false;
-
-if (CONFIG.apiKey.startsWith('PASTE')) {
-  demo = true;
-  $('here').textContent = 'mode coba';
-  $('note').textContent = 'mode coba: pesan cuma muncul di layar ini, belum kekirim ke dia.';
-  hapus = key => lepas(key);
-  hapusSemua = () => { Object.keys(rows).forEach(lepas); };
-  say = text => {
-    text = String(text).trim(); if (!text) return;
-    draw({ who: me, text, t: Date.now() }, 'x' + Date.now());
-    setTimeout(()=>{ theirLastOn = Date.now(); paintTicks(); }, 700);
-    setTimeout(()=>{ theirSeen = Date.now(); paintTicks(); }, 1800);
-  };
-} else {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-  const { getDatabase, ref, push, set, remove, onValue, onChildAdded, onChildRemoved, onDisconnect, query, limitToLast, serverTimestamp }
-    = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
-
-  const app = initializeApp(CONFIG);
-  const db  = getDatabase(app);
-  const auth = getAuth(app);
-  const base = 'rooms/' + ROOM;
-  const msgsRef = ref(db, base + '/messages');
-  let lastKnown = Number(store.get('lastKnown') || 0);
-  let started = false;
-
-  const PESAN = {
-    'auth/invalid-credential':'email atau password salah',
-    'auth/invalid-login-credentials':'email atau password salah',
-    'auth/wrong-password':'email atau password salah',
-    'auth/user-not-found':'email belum terdaftar',
-    'auth/invalid-email':'format emailnya belum bener',
-    'auth/too-many-requests':'kebanyakan salah, tunggu sebentar',
-    'auth/network-request-failed':'internetnya lagi bermasalah',
-    'auth/operation-not-allowed':'aktifkan Email/Password di Firebase > Authentication'
-  };
-  async function login(){
-    const em = $('mail').value.trim().toLowerCase();
-    if (!EMAILS[em]) { $('lgerr').textContent = 'email ini belum didaftarkan di app'; return; }
-    $('lgerr').textContent = 'sebentar...';
-    try { await signInWithEmailAndPassword(auth, em, $('pass').value); }
-    catch(e){ $('lgerr').textContent = PESAN[e.code] || ('gagal: ' + e.code); }
+/* ---------- rekam suara ---------- */
+let rec = null, potongan = [], mulai = 0, hitung = null;
+$('mic').addEventListener('click', async () => {
+  if (rec && rec.state === 'recording') { rec.stop(); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder){
+    $('note').textContent = 'browser ini belum bisa rekam suara'; return;
   }
-  $('masuk').addEventListener('click', login);
-  $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-  $('mail').addEventListener('keydown', e => { if (e.key === 'Enter') $('pass').focus(); });
-  window.keluar = () => signOut(auth).then(()=>location.reload());
-
-  onAuthStateChanged(auth, user => {
-    if (!user) { $('login').classList.add('on'); $('mail').focus(); return; }
-    const peran = EMAILS[(user.email||'').toLowerCase()];
-    if (!peran) { $('lgerr').textContent = 'email ini belum didaftarkan di app'; signOut(auth); return; }
-    me = peran; you = me === 'banana' ? 'avocado' : 'banana';
-    store.set('me', me);
-    renderIdentity();
-    $('login').classList.remove('on');
-    $('lgerr').textContent = '';
-    if (started) return;
-    started = true;
-
-    const meHere   = ref(db, base + '/here/' + me);
-    const meLastOn = ref(db, base + '/lastOn/' + me);
-    const meSeen   = ref(db, base + '/seen/' + me);
-    seeAll = () => set(meSeen, Date.now()).catch(()=>{});
-
-    set(meHere, true); set(meLastOn, Date.now());
-    onDisconnect(meHere).set(false);
-    onDisconnect(meLastOn).set(serverTimestamp());
-    setInterval(()=> set(meLastOn, Date.now()).catch(()=>{}), 30000);
-    document.addEventListener('visibilitychange', ()=>{
-      set(meHere, !document.hidden).catch(()=>{});
-      if (!document.hidden && open()) seeAll();
-    });
-
-    onValue(ref(db, base+'/here/'+you),   s => { theirHere = s.val() === true; presence(); });
-    onValue(ref(db, base+'/lastOn/'+you), s => { theirLastOn = Number(s.val()||0); presence(); });
-    onValue(ref(db, base+'/seen/'+you),   s => { theirSeen = Number(s.val()||0); paintTicks(); });
-
-    onChildRemoved(msgsRef, snap => lepas(snap.key));
-
-    hapus = key => remove(ref(db, base + '/messages/' + key))
-      .catch(() => { $('note').textContent = 'gagal hapus'; });
-    hapusSemua = () => remove(msgsRef)
-      .then(() => { $('note').textContent = 'chat dikosongkan'; })
-      .catch(() => { $('note').textContent = 'gagal hapus'; });
-
-    onChildAdded(query(msgsRef, limitToLast(200)), snap => {
-      const m = snap.val(); if (!m) return;
-      draw(m, snap.key);
-      const t = m.t || Date.now();
-      if (m.who === you && t > lastKnown){
-        lastKnown = t; store.set('lastKnown', String(t));
-        if (!open() || document.hidden){ unread++; badge(); blip(880); toast(m.text); }
-      }
-      if (open() && !document.hidden){ unread = 0; badge(); seeAll(); }
-    });
-
-    say = async text => {
-      text = String(text).trim(); if (!text) return;
-      try { await push(msgsRef, { who: me, text, t: Date.now(), s: serverTimestamp() }); $('note').textContent=''; }
-      catch(e){ $('note').textContent = 'gagal terkirim'; }
+  try {
+    const arus = await navigator.mediaDevices.getUserMedia({ audio:true });
+    rec = new MediaRecorder(arus); potongan = []; mulai = Date.now();
+    rec.ondataavailable = e => potongan.push(e.data);
+    rec.onstop = () => {
+      clearInterval(hitung);
+      arus.getTracks().forEach(t => t.stop());
+      $('mic').classList.remove('rec'); $('note').textContent = '';
+      const lama = (Date.now() - mulai) / 1000;
+      if (lama < 0.6) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        if (fr.result.length > 700000){ $('note').textContent = 'rekamannya kepanjangan'; return; }
+        kirim({ kind:'v', data: fr.result, dur: lama });
+      };
+      fr.readAsDataURL(new Blob(potongan, { type: rec.mimeType }));
     };
+    rec.start();
+    $('mic').classList.add('rec');
+    hitung = setInterval(() => {
+      const lewat = (Date.now() - mulai) / 1000;
+      $('note').textContent = 'merekam ' + mmss(lewat);
+      if (lewat >= REKAM_MAKS) rec.stop();
+    }, 200);
+  } catch(e){ $('note').textContent = 'mikrofonnya belum diizinkan'; }
+});
+
+/* ---------- firebase ---------- */
+let say = () => {}, kirim = () => {}, seeAll = () => {};
+
+const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+const { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+const { getDatabase, ref, push, set, remove, onValue, onChildAdded, onChildRemoved, onDisconnect, query, limitToLast, serverTimestamp }
+  = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+
+const app = initializeApp(CONFIG);
+const db  = getDatabase(app);
+const auth = getAuth(app);
+
+const PESAN = {
+  'auth/invalid-credential':'email atau password salah',
+  'auth/invalid-login-credentials':'email atau password salah',
+  'auth/wrong-password':'email atau password salah',
+  'auth/user-not-found':'email belum terdaftar',
+  'auth/invalid-email':'format emailnya belum bener',
+  'auth/too-many-requests':'kebanyakan salah, tunggu sebentar',
+  'auth/network-request-failed':'internetnya lagi bermasalah',
+  'auth/operation-not-allowed':'aktifkan Email/Password di Firebase > Authentication'
+};
+async function login(){
+  const em = $('mail').value.trim().toLowerCase();
+  if (!USERS[em]) { $('lgerr').textContent = 'email ini belum didaftarkan di app'; return; }
+  $('lgerr').textContent = 'sebentar...';
+  try { await signInWithEmailAndPassword(auth, em, $('pass').value); }
+  catch(e){ $('lgerr').textContent = PESAN[e.code] || ('gagal: ' + e.code); }
+}
+$('masuk').addEventListener('click', login);
+$('pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+$('mail').addEventListener('keydown', e => { if (e.key === 'Enter') $('pass').focus(); });
+window.keluar = () => signOut(auth).then(()=>location.reload());
+
+let jalan = false, lepasAktif = [];
+
+onAuthStateChanged(auth, user => {
+  if (!user) { $('login').classList.add('on'); $('mail').focus(); return; }
+  const u = USERS[(user.email||'').toLowerCase()];
+  if (!u) { $('lgerr').textContent = 'email ini belum didaftarkan di app'; signOut(auth); return; }
+  me = u.tokoh; store.set('me', me);
+  renderIdentity();
+  $('login').classList.remove('on'); $('lgerr').textContent = '';
+  if (jalan) return;
+  jalan = true;
+
+  ruangSaya = ROOMS.filter(r => r.anggota.includes(me));
+  bikinTab();
+  ruangSaya.forEach(pantau);
+  pindah(0);
+});
+
+function bikinTab(){
+  $('tabs').innerHTML = '';
+  ruangSaya.forEach((r, i) => {
+    const lain = r.anggota.filter(a => a !== me);
+    const b = document.createElement('button');
+    b.className = 'tab'; b.id = 'tab-' + r.id; b.title = r.label;
+    b.innerHTML = lain.slice(0,2).map(a =>
+      `<span class="mini" style="background:${ART[a].bg}">${avatar(a)}</span>`).join('')
+      + '<span class="dot"></span>';
+    b.addEventListener('click', () => pindah(i));
+    $('tabs').appendChild(b);
   });
 }
+
+/* dengarkan semua ruang, cuma buat tanda pesan baru */
+function pantau(r){
+  let akhir = Number(store.get('akhir:' + r.id) || 0);
+  onChildAdded(query(ref(db, 'rooms/' + r.id + '/messages'), limitToLast(1)), snap => {
+    const m = snap.val(); if (!m) return;
+    const t = m.t || 0;
+    if (m.who === me || t <= akhir) { akhir = Math.max(akhir, t); return; }
+    akhir = t; store.set('akhir:' + r.id, String(t));
+    const aktif = ruang && ruang.id === r.id && open() && !document.hidden;
+    if (aktif) return;
+    belum[r.id] = (belum[r.id] || 0) + 1;
+    badge(); blip(880);
+    toast(r.label, m.kind === 'v' ? 'pesan suara' : m.text);
+  });
+}
+
+function pindah(i){
+  lepasAktif.forEach(f => { try { f(); } catch(e){} });
+  lepasAktif = [];
+  ruang = ruangSaya[i];
+  lawan = ruang.anggota.filter(a => a !== me);
+  belum[ruang.id] = 0; badge();
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  const tb = $('tab-' + ruang.id); if (tb) tb.classList.add('on');
+  document.body.classList.toggle('pakai-cium', !!ruang.cium);
+  if (!ruang.cium && kissMode) setKiss(false);
+
+  $('portrait').innerHTML = lawan.map(a =>
+    `<span class="wajah" style="background:${ART[a].bg}">${avatar(a)}</span>`).join('')
+    + '<span class="here" id="here">...</span>';
+  $('msgs').innerHTML = '<div id="empty">belum ada pesan<br>sapa dia duluan</div>';
+  mine = []; rows = {};
+  theirHere = false; theirLastOn = 0; theirSeen = 0;
+
+  const base = 'rooms/' + ruang.id;
+  const msgsRef  = ref(db, base + '/messages');
+  const meHere   = ref(db, base + '/here/' + me);
+  const meLastOn = ref(db, base + '/lastOn/' + me);
+  const meSeen   = ref(db, base + '/seen/' + me);
+
+  seeAll = () => set(meSeen, Date.now()).catch(()=>{});
+  set(meHere, true); set(meLastOn, Date.now());
+  onDisconnect(meHere).set(false);
+  onDisconnect(meLastOn).set(serverTimestamp());
+
+  const denyut = setInterval(()=> set(meLastOn, Date.now()).catch(()=>{}), 30000);
+  lepasAktif.push(()=> clearInterval(denyut));
+  lepasAktif.push(()=> set(meHere, false).catch(()=>{}));
+
+  const here = {}, lastOn = {}, seen = {};
+  lawan.forEach(a => {
+    lepasAktif.push(onValue(ref(db, base+'/here/'+a),   s => { here[a] = s.val() === true; hitungLawan(); }));
+    lepasAktif.push(onValue(ref(db, base+'/lastOn/'+a), s => { lastOn[a] = Number(s.val()||0); hitungLawan(); }));
+    lepasAktif.push(onValue(ref(db, base+'/seen/'+a),   s => { seen[a] = Number(s.val()||0); hitungLawan(); }));
+  });
+  function hitungLawan(){
+    theirHere   = lawan.some(a => here[a]);
+    theirLastOn = Math.max(0, ...lawan.map(a => lastOn[a] || 0));
+    theirSeen   = Math.min(...lawan.map(a => seen[a] || 0));
+    presence();
+  }
+
+  lepasAktif.push(onChildRemoved(msgsRef, snap => lepas(snap.key)));
+  lepasAktif.push(onChildAdded(query(msgsRef, limitToLast(200)), snap => {
+    const m = snap.val(); if (!m) return;
+    draw(m, snap.key);
+    if (open() && !document.hidden){ belum[ruang.id] = 0; badge(); seeAll(); }
+  }));
+
+  hapus = key => remove(ref(db, base + '/messages/' + key))
+    .catch(()=>{ $('note').textContent = 'gagal hapus'; });
+  hapusSemua = () => remove(msgsRef)
+    .then(()=>{ $('note').textContent = 'chat dikosongkan'; })
+    .catch(()=>{ $('note').textContent = 'gagal hapus'; });
+
+  kirim = async isi => {
+    try { await push(msgsRef, Object.assign({ who: me, t: Date.now(), s: serverTimestamp() }, isi));
+          $('note').textContent = ''; }
+    catch(e){ $('note').textContent = 'gagal terkirim'; }
+  };
+  say = text => {
+    text = String(text).trim(); if (!text) return;
+    kirim({ text });
+  };
+  if (open()) seeAll();
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if (!ruang) return;
+  if (!document.hidden && open()){ belum[ruang.id] = 0; badge(); seeAll(); }
+});
 
 $('go').addEventListener('click', ()=>{ say($('text').value); $('text').value=''; });
 $('text').addEventListener('keydown', e=>{ if(e.key==='Enter'){ say($('text').value); $('text').value=''; } });
 window.addEventListener('pagehide', flushKisses);
+
 </script>
 </body>
 </html>
