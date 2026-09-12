@@ -571,9 +571,9 @@ function draw(m){
 
 function paintTicks(){
   mine.forEach(x=>{
-    let cls='', label='belum sampai', icon='';
+    let cls='', label='undelivered', icon='';
     if (theirSeen >= x.t){ cls='read'; label='dibaca'; icon=CHECK+CHECK; }
-    else if (theirHere || theirLastOn >= x.t){ label='sampai'; icon=CHECK; }
+    else if (theirHere || theirLastOn >= x.t){ label='delivered'; icon=CHECK; }
     x.node.className = 'tick ' + cls;
     x.node.innerHTML = icon + '<span>'+label+'</span>';
   });
