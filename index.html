@@ -587,15 +587,15 @@ function draw(m, key){
 
 function paintTicks(){
   mine.forEach(x=>{
-    let cls='', label='belum sampai', icon='';
-    if (theirSeen >= x.t){ cls='read'; label='dibaca'; icon=CHECK+CHECK; }
-    else if (theirHere || theirLastOn >= x.t){ label='sampai'; icon=CHECK; }
+    let cls='', label='undelivered', icon='';
+    if (theirSeen >= x.t){ cls='read'; label='read'; icon=CHECK+CHECK; }
+    else if (theirHere || theirLastOn >= x.t){ label='delivered'; icon=CHECK; }
     x.node.className = 'tick ' + cls;
     x.node.innerHTML = icon + '<span>'+label+'</span>';
   });
 }
 function presence(){
-  $('here').textContent = theirHere ? 'lagi buka'
+  $('here').textContent = theirHere ? 'online'
     : (theirLastOn ? 'terakhir '+clock(theirLastOn) : 'offline');
   paintTicks();
 }
